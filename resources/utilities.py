@@ -4,7 +4,7 @@ import os
 import sys
 import json
 import numpy
-import mitie
+#import mitie
 import pprint
 import argparse
 from unidecode import unidecode
@@ -22,7 +22,7 @@ def parse_args():
                         help='Specify path to config file.',
                         type=str,
                         required=False,
-                        default="")
+                        default="config.ini")
     parser.add_argument('-p', '--port',
                         help='Specify port to listen on.',
                         type=int,
@@ -43,6 +43,10 @@ def parse_args():
                         type=str,
                         required=False,
                         default="/usr/src/data/GoogleNews-vectors-negative300.bin.gz")
+    parser.add_argument('-ws', '--w2v-model-spa',
+                        help='Specify path to Spanish w2v model.',
+                        type=str,
+                        required=False)
     parser.add_argument('-md', '--mitie-dir',
                         help='Specify MITIE directory.',
                         type=str,
@@ -81,10 +85,9 @@ def get_configs(args):
             config_dict['mordecai_port'] = config_parser.get('Server', 'mordecai_port')
             config_dict['es_host'] = config_parser.get('Server', 'geonames_host')
             config_dict['es_port'] = config_parser.get('Server', 'geonames_host')
-        else:
-            config_dict['mordecai_port'] = 5000
-            config_dict['es_host'] = 'elastic'
-            config_dict['es_port'] = '9200'
+        if 'Spanish' in config_parser.sections():
+            config_dict['mitie_ner_model_spa'] = config_parser.get('Spanish', 'mitie_ner_model_spa')
+            config_dict['word2vec_model_spa'] = config_parser.get('Spanish', 'word2vec_model_spa')
     else:
         # if no config file, first check for an environment variable,
         # then fallback to a command line argument
@@ -123,20 +126,38 @@ def setup_mitie(mitie_directory, mitie_ner_model):
     object.
     """
     sys.path.append(mitie_directory)
+    import mitie
     ner_model = mitie.named_entity_extractor(mitie_ner_model)
     return ner_model
 
 
-def setup_w2v(word2vec_model, country_names_json):
+def setup_w2v(word2vec_model, country_names_json, w2v_format, w2v_dim = 300):
     ''' Given the path to a word2vec model and a JSON file containing country
-    names and codes, setup the indices and vocabulary for geocoding.'''
-    prebuilt = Word2Vec.load_word2vec_format(word2vec_model, binary=True)
+    names and codes, setup the indices and vocabulary for geocoding.
+    
+    Parameters
+    ---------
+    word2vec_model: string
+                     Path to the pre-trained word2vec model
+    country_names_json: string
+                     Path to the JSON with country names
+    format: string
+            One of "google" or "gensim", indicating how the w2v model was trained
+    '''
+    if w2v_format == "google":
+        print "Google format"
+        prebuilt = Word2Vec.load_word2vec_format(word2vec_model, binary=True)
+    if w2v_format == "gensim":
+        print "gensim format"
+        prebuilt = prebuilt = Word2Vec.load(word2vec_model)
+    else:
+        print "Incorrect word2vec format type"
     vocab_set = set(prebuilt.vocab.keys())
     with open(country_names_json) as f:
         stopword_country_names = json.load(f)
     countries = stopword_country_names.keys()
     idx_country_mapping = {}
-    index = numpy.empty(shape=(len(countries), 300), dtype='float64')
+    index = numpy.empty(shape=(len(countries), w2v_dim), dtype='float64')
     for idx, country in enumerate(countries):
         country = unidecode(country)
         try:
