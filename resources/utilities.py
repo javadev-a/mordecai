@@ -187,7 +187,10 @@ def talk_to_mitie(text, ner_model):
                     "entities" contains a list of dictionaries. Each of these
                     dicts has keys "tag", "text", and "score".
     """
-    text = text.encode("utf-8")
+    try:
+        text = text.encode("utf-8")
+    except UnicodeDecodeError:
+        pass
     tokens = mitie.tokenize(text)
     tokens.append(' x ')
     # eventually, handle different NER models here.
