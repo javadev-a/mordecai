@@ -81,18 +81,18 @@ bash data/fetch_models.sh
 To start Mordecai locally, run these three commands:
 
 ```
-sudo docker run -d -p 9200:9200 --name=elastic openeventdata/es-geonames
+sudo docker run -d -p 127.0.0.1:9200:9200 -v /PATH/TO/data/geoname_index/data/:/usr/share/elasticsearch/data elasticsearch:5.1.2
 sudo docker build -t mordecai .
 sudo docker run -d -p 5000:5000 -v PATH/TO/data:/usr/src/data --link elastic:elastic mordecai 
 ```
 
 ### Explanation:
 
-The first code block downloads the pre-built word2vec and MITIE models that
-Mordecai needs.
+The first code block downloads the pre-built word2vec and MITIE models and the
+pre-built Elasticsearch Geonames index that Mordecai needs.
 
 In the second block, the first line downloads (if you're running it for the
-first time) and starts a pre-built image of a Geonames Elasticsearch container.
+first time) and starts 
 This container holds the geographic gazetteer that Mordecai uses to associate
 place names with latitudes and longitudes. It will be accessible on port 9200
 with the name `elastic`.
