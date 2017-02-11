@@ -170,7 +170,7 @@ def setup_es(es_ip, es_port):
 
     es_url = 'http://{}:{}/'.format(es_ip, es_port)
     CLIENT = Elasticsearch(es_url)
-    S = Search(CLIENT, index="geonames")
+    S = Search(using=CLIENT, index="geonames")
     return S
 
 

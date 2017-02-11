@@ -3,8 +3,8 @@ backports.ssl-match-hostname==3.4.0.2
 boto==2.38.0
 bz2file==0.98
 certifi==2015.4.28
-elasticsearch==2.3.0
-elasticsearch-dsl==0.0.4
+elasticsearch==5.1.0
+elasticsearch-dsl==5.1.0
 Flask==0.10.1
 Flask-HTTPAuth==2.5.0
 Flask-RESTful==0.3.3
