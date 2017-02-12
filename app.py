@@ -28,7 +28,6 @@ if __name__ == '__main__':
                                                  os.path.dirname(__file__)))
     w2v_data = utilities.setup_w2v(configs['word2vec_model'],
                                    location + '/resources/stopword_country_names.json')
-
     print 'Setting up Elasticsearch connection.'
     es_conn = utilities.setup_es(configs['es_host'], configs['es_port'])
 

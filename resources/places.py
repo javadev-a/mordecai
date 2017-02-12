@@ -186,7 +186,7 @@ and longitudes in the form: {"lat":34.567, "lon":12.345,
         args = self.reqparse.parse_args()
         text = args['text']
         country_filter = args['country']
-        print country_filter
+        #print country_filter
         if not country_filter:
             try:
                 country_filter = CountryAPI(**self.country_kwargs).process(text)
@@ -195,7 +195,7 @@ and longitudes in the form: {"lat":34.567, "lon":12.345,
         if not isinstance(country_filter, list):
             # this is an ugly hack. The process expects a list, but
             # CountryAPI returns a string.
-            print "Listifying country_filter"
+            #print "Listifying country_filter"
             country_filter = [country_filter]
         located = self.process(text, country_filter)
         return located
@@ -226,7 +226,8 @@ and longitudes in the form: {"lat":34.567, "lon":12.345,
         locations = []
         for i in locs['entities']:
             if i['text'] in country_names:
-                print " (Country/blacklist. Skipping...)"
+                pass
+                #print " (Country/blacklist. Skipping...)"
             elif i['tag'] == "LOCATION" or i['tag'] == "Location":
                 try:
                     # put this in query_geonames?
@@ -254,7 +255,7 @@ and longitudes in the form: {"lat":34.567, "lon":12.345,
                                          "placename": loc[3],
                                          "countrycode": loc[5],
                                          "admin1" : loc[6]}
-                        print('Formatted loc: {}'.format(formatted_loc))
+                        #print('Formatted loc: {}'.format(formatted_loc))
                         locations.append(formatted_loc)
                 except Exception as e:
                     print e
@@ -284,11 +285,11 @@ and longitudes in the form: {"lat":34.567, "lon":12.345,
         context = set([x.lower() for x in context])
         place = check_names(results, term)
         if not place:
-            print "No exact match"
+            #print "No exact match"
             try:
                 place = results[0]
             except IndexError:
-                print "IndexError on results[0]"
+                #print "IndexError on results[0]"
                 return []
         coords = place['coordinates'].split(",")
         admin1_name = utilities.get_admin1(place['country_code2'], place['admin1_code'], self.admin1_dict)
