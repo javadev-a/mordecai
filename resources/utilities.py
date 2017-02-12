@@ -14,7 +14,6 @@ from ConfigParser import ConfigParser
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl.query import MultiMatch
 
-
 def parse_args():
     parser = argparse.ArgumentParser(description='Mordecai Geolocation')
     parser._optionals.title = 'Options'
@@ -37,7 +36,7 @@ def parse_args():
                         help='Specify elasticsearch port.',
                         type=str,
                         required=False,
-                        default='9200')
+                        default=9200)
     parser.add_argument('-w', '--w2v-model',
                         help='Specify path to w2v model.',
                         type=str,
@@ -84,7 +83,7 @@ def get_configs(args):
         else:
             config_dict['mordecai_port'] = 5000
             config_dict['es_host'] = 'elastic'
-            config_dict['es_port'] = '9200'
+            config_dict['es_port'] = 9200
     else:
         # if no config file, first check for an environment variable,
         # then fallback to a command line argument
@@ -167,9 +166,7 @@ def setup_es(es_ip, es_port):
     -------
     es_conn: an elasticsearch_dsl Search connection object.
     """
-
-    es_url = 'http://{}:{}/'.format(es_ip, es_port)
-    CLIENT = Elasticsearch(es_url)
+    CLIENT = Elasticsearch([{'host' : es_ip, 'port' : es_port}])
     S = Search(using=CLIENT, index="geonames")
     return S
 
