@@ -6,14 +6,52 @@ from ConfigParser import ConfigParser
 from mitie import named_entity_extractor
 from ..country import CountryAPI
 from ..places import PlacesAPI
-from ..utilities import mitie_context, setup_es, query_geonames, read_in_admin1, get_admin1
+from ..utilities import mitie_context, setup_es, query_geonames, read_in_admin1, get_admin1, setup_mitie, get_configs, parse_args, setup_w2v
+
+def test_country_setup():
+    args = parse_args()
+    configs = get_configs(args)
+
+    ner_model = setup_mitie(configs['mitie_directory'],
+                                      configs['mitie_ner_model'])
+    location = os.path.realpath(os.path.join(os.getcwd(),
+                                                 os.path.dirname(__file__)))
+    w2v_data = setup_w2v(configs['word2vec_model'],
+                                   location + '/../stopword_country_names.json')
+
+    es_conn = setup_es(configs['es_host'], configs['es_port'])
+
+    country_kwargs = {'ner_model': ner_model,
+                      'index': w2v_data['index'],
+                      'vocab_set': w2v_data['vocab_set'],
+                      'prebuilt': w2v_data['prebuilt'],
+                      'idx_country_mapping': w2v_data['idx_country_mapping']}
+    return country_kwargs
+
+def test_places_setup():
+    args = parse_args()
+    configs = get_configs(args)
+    ner_model = setup_mitie(configs['mitie_directory'],
+                                      configs['mitie_ner_model'])
+    location = os.path.realpath(os.path.join(os.getcwd(),
+                                                 os.path.dirname(__file__)))
+    es_conn = setup_es(configs['es_host'], configs['es_port'])
+
+    places_kwargs = {
+            'ner_model': ner_model,
+            'es_conn': es_conn,
+            'country_kwargs': country_kwargs}
+    return places_kwargs
+
+country_kwargs = test_country_setup()
+places_kwargs = test_places_setup()
 
 def test_places_api_one():
     if os.environ.get('CI'):
         ci = 'circle'
         assert ci == 'circle'
     else:
-        a = PlacesAPI()
+        a = PlacesAPI(**places_kwargs)
         locs = "Ontario"
         result = a.process(locs, ['CAN'])
         print result
@@ -25,7 +63,7 @@ def test_places_api_two():
         ci = 'circle'
         assert ci == 'circle'
     else:
-        a = PlacesAPI()
+        a = PlacesAPI(**places_kwargs)
         locs = "Toronto"
         result = a.process(locs, ['CAN'])
         print result
@@ -37,7 +75,7 @@ def test_places_api_three():
         ci = 'circle'
         assert ci == 'circle'
     else:
-        a = PlacesAPI()
+        a = PlacesAPI(**places_kwargs)
         locs = "Kampala"
         result = a.process(locs, ['UGA'])
         print result
@@ -66,7 +104,9 @@ def test_get_admin1_none():
     assert "NA" == get_admin1("fakeplace", "16", admin1_dict)
 
 def test_query_geonames():
-    conn = setup_es()
+    args = parse_args()
+    configs = get_configs(args)
+    conn = setup_es(configs['es_host'], configs['es_port'])
     placename = "Berlin"
     country_filter = ["DEU"]
     qg = query_geonames(conn, placename, country_filter)
@@ -78,7 +118,7 @@ def test_places_api_syria():
         ci = 'circle'
         assert ci == 'circle'
     else:
-        a = PlacesAPI()
+        a = PlacesAPI(**places_kwargs)
         locs = "Rebels from Aleppo attacked Damascus."
         result = a.process(locs, ['SYR'])
         print result
@@ -103,17 +143,17 @@ def test_mitie_context():
     assert mc == mc_gold
 
 def test_country_process_one():
-    a = CountryAPI()
+    a = CountryAPI(**country_kwargs)
     result = a.process('The meeting happened in Ontario.')
     assert result == u'CAN'
 
 def test_country_process_two():
-    a = CountryAPI()
+    a = CountryAPI(**country_kwargs)
     result = a.process('Rebels from Damascus attacked Aleppo')
     assert result == u'SYR'
 
 def test_city_resolution():
-    a = PlacesAPI()
+    a = PlacesAPI(**places_kwargs)
     city_list = [("Lagos", "NGA"),
              ("Mogadishu", "SOM"),
              ("Mannheim", "DEU"),
